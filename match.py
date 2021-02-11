@@ -43,10 +43,13 @@ import csv
 import json
 
 import matplotlib.pyplot as plt
+from matplotlib.ticker import MaxNLocator
 import numpy as np
 import seaborn as sb
 
 def loadData(filename):
+    print(f"{'=' * 10} Loading data {'=' * 10}")
+    
     people = []
     
     with open(filename) as f:
@@ -73,13 +76,34 @@ def loadData(filename):
             }
             people.append(person)
             
-    print(f'There were {len(people)} responses\n')
+    print(f'There were {len(people)} responses')
     # print(json.dumps(people[-1], indent=4))
     
     return people
 
 def cleanData(people):
+    print(f"\n{'=' * 10} Cleaning data {'=' * 10}")
+    
     return people
+
+def analyzeData(people):
+    print(f"\n{'=' * 10} Analyzing data {'=' * 10}")
+    
+    responses = np.array([person['responses'] for person in people])
+    print(responses)
+    
+    fig, axs = plt.subplots(6, 5)
+    fig.set_size_inches(18.5, 10.5)
+    plt.subplots_adjust(left=0.05, right=0.95, hspace=0.6)
+    
+    for q in range(len(responses[0])):
+        # TODO: add percentage labels for each bin (plt.annotate)
+        axs[q // 5, q % 5].hist(responses[:, q], bins=5)
+        axs[q // 5, q % 5].set_title(f"Question {q}")
+        axs[q // 5, q % 5].xaxis.set_major_locator(MaxNLocator(integer=True))
+        axs[q // 5, q % 5].yaxis.set_major_locator(MaxNLocator(integer=True))
+        
+    plt.savefig('output/histograms.png')
 
 def computeSimilarity(person1, person2):
     """
@@ -94,6 +118,8 @@ def computeSimilarity(person1, person2):
     return np.count_nonzero(responses1 == responses2) / len(responses1)
 
 def match(people):
+    print(f"\n{'=' * 10} Making matches {'=' * 10}")
+    
     # compute compatibilities
     scores = np.zeros((len(people), len(people)))
     for i, person1 in enumerate(people):
@@ -104,7 +130,7 @@ def match(people):
     print()
     fig, ax = plt.subplots(figsize=(11, 9))
     sb.heatmap(scores, annot=True)
-    plt.savefig('results.png')
+    plt.savefig('output/confusion_matrix.png')
     
     # select best overall pairs
     """
@@ -130,10 +156,12 @@ def match(people):
     
     print(f"\nCommunity score: {community_score:.4%}")
     
+    return matches
 
 def main():
     people = loadData('data/Athlete Mingle_February 10, 2021_21.20.csv')
     people = cleanData(people)
+    analyzeData(people)
     matches = match(people)
 
 if __name__ == '__main__':
