@@ -26,26 +26,46 @@ Each row has the following columns:
 16: User Language
 
 ############### Athlete Mingle Data ###############
-17: First, let's get a few things out of the way
-What grade are you in?
-18: What sport do you do?
-19: Major? (or interest if no major yet)
-20: Do you want to be placed in a group with one teammate or friend? You should both put each other's name for this question!
-21: Do you want to be placed with people in your grade?
-22: Would you rather do a 1-on-1?
-23: Would you be interested in a student-athlete speed-dating event in the future?
+17: First and last name
+18: Stanford email
+19: What year are you?
+20: What sport do you do?
+21: Major? (or interest if no major yet)
+22: Would you rather be matched 1-on-1 or in a small group?
+23: If you want one teammate or friend to be in your group, you should both put
+    each other's name for this question! Leave this question blank if you'd
+    like your entire group to be a ~surprise~.
+24: Do you want to be placed with people in your year?
 
-############### Questions ###############
-24-52: Questions
+25-53
+
+54: Unrelated to Athlete Mingle: would you be interested in a student-athlete
+    speed dating event in the future?
+
+############### Extras ###############
+55: Q7 - Parent Topics
+56: Q7 - Sentiment Polarity
+57: Q7 - Sentiment Score
+58: Q7 - Sentiment
+59: Q7 - Topic Sentiment Label
+60: Q7 - Topic Sentiment Score
+61: Q7 - Topics
 """
 
 import csv
 import json
+import os
 
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 import numpy as np
 import seaborn as sb
+
+SPORTS = {}
+with open('sports.json') as f:
+    SPORTS = json.load(f)
+
+print(SPORTS)
 
 def loadData(filename):
     print(f"{'=' * 10} Loading data {'=' * 10}")
@@ -55,6 +75,9 @@ def loadData(filename):
     with open(filename) as f:
         question_ids, questions, _, *responses = csv.reader(f)
         
+        # for i, column in enumerate(questions):
+        #     print(f"{i}: {column}")
+        
         for person_id, row in enumerate(responses):
             person = {
                 'id': person_id,
@@ -62,17 +85,21 @@ def loadData(filename):
                 'end date': row[1],
                 'qualtrics_id': row[8],
                 'meta data': {
-                    'year': row[17],
-                    'sport': row[18],
-                    'major': row[19],
+                    'name': row[17],
+                    'email': row[18],
+                    'year': int(row[19]),
+                    # 'gender': sports[row[20]]["gender"],
+                    # 'sport': sports[row[20]]["sport"],
+                    'sport': int(row[20]),
+                    'major': int(row[21]),
                 },
                 'athlete mingle': {
-                    'friend': row[20],
-                    'same grade': row[21],
-                    '1-on-1': row[22],
-                    'speed-dating': row[23],
+                    '1-on-1': int(row[22]),
+                    'friend': row[23],
+                    'same grade': int(row[24]),
                 },
-                'responses': [int(x) if x != '' else 0 for x in row[24:]]
+                'responses': [int(x) for x in row[25:54]],
+                'speed-dating': int(row[54])
             }
             people.append(person)
             
@@ -89,6 +116,127 @@ def cleanData(people):
 def analyzeData(people):
     print(f"\n{'=' * 10} Analyzing data {'=' * 10}")
     
+    ########## Analyze years ##########
+    
+    years = [person['meta data']['year'] for person in people]
+    labels = ['Frosh', 'Sophomore', 'Junior', 'Senior', '5th Year/Coterm']
+    counts = [years.count(i) for i in range(1, len(labels) + 1)]
+    
+    plt.bar(range(len(counts)), counts, color='#Bf0A30')
+    plt.xlabel('Year')
+    plt.ylabel('Responses')
+    plt.title('Athlete Mingle Year Distribution')
+
+    plt.xticks(range(len(counts)), labels)
+
+    plt.savefig('output/years.png')
+    
+    ########## Get sports ##########
+    
+    res_sports = []
+    
+    with open('data/Athlete Mingle_February 13, 2021_22.04.csv') as f:
+        question_ids, questions, _, *responses = csv.reader(f)
+        
+        res_sports = [row[20] for row in responses]
+        
+    ########## Analyze sports ##########
+    
+    labels = [sport['sport'] for sport in SPORTS.values()]
+    counts = [res_sports.count(label) for label in labels]
+    
+    fig, ax = plt.subplots()
+    
+    # TODO: set plt dimensions
+    
+    ax.barh(range(len(counts)), counts, color='#Bf0A30')
+    ax.invert_yaxis()
+    plt.ylabel('Sport')
+    plt.xlabel('Responses')
+    plt.title('Athlete Mingle Sport Distribution')
+
+    plt.yticks(range(len(counts)), labels)
+
+    # plt.savefig('output/sports.png')
+    plt.show()
+    
+    ########## Analyze sports ##########
+    
+    labels = ['M', 'W', 'B']
+    counts = [0, 0, 0]
+    for res in res_sports:
+        for sport in SPORTS.values():
+            if sport['sport'] == res:
+                counts[labels.index(sport['gender'])] += 1
+    
+    fig, ax = plt.subplots()
+    
+    plt.bar(range(len(counts)), counts, color='#Bf0A30')
+    plt.xlabel('Gender')
+    plt.ylabel('Responses')
+    plt.title('Athlete Mingle Gender Distribution')
+
+    plt.xticks(range(len(counts)), ['Men', 'Women', 'Co-Ed'])
+
+    # plt.savefig('output/sports.png')
+    # plt.show()
+    
+    ########## Analyze year/gender ##########
+    
+    labels = ['Frosh', 'Sophomore', 'Junior', 'Senior', '5th Year/Coterm']
+    men_count = [0] * len(labels)
+    women_count = [0] * len(labels)
+    both_count = [0] * len(labels)
+    
+    for y, s in zip(years, res_sports):
+        gender = None
+        for sport in SPORTS.values():
+            if sport['sport'] == s:
+                gender = sport['gender']
+                break
+                
+        if gender == 'M':
+            men_count[y - 1] += 1
+        elif gender == 'W':
+            women_count[y - 1] += 1
+        if gender == 'B':
+            both_count[y - 1] += 1
+
+    x = np.arange(len(labels))  # the label locations
+    width = 0.2  # the width of the bars
+
+    fig, ax = plt.subplots()
+    rects1 = ax.bar(x - width, men_count, width, label='Men', color='#Bf0A30')
+    rects2 = ax.bar(x, women_count, width, label='Women', color='#4298B5')
+    rects3 = ax.bar(x + width, both_count, width, label='Co-Ed', color='#7F7776')
+
+    # Add some text for labels, title and custom x-axis tick labels, etc.
+    ax.set_ylabel('Responses')
+    ax.set_title('Athlete Mingle Year and Gender distributions')
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels)
+    ax.legend()
+    
+    def autolabel(rects):
+        """Attach a text label above each bar in *rects*, displaying its height."""
+        for rect in rects:
+            height = rect.get_height()
+            ax.annotate('{}'.format(height),
+                        xy=(rect.get_x() + rect.get_width() / 2, height),
+                        xytext=(0, 3),  # 3 points vertical offset
+                        textcoords="offset points",
+                        ha='center', va='bottom')
+
+    autolabel(rects1)
+    autolabel(rects2)
+    autolabel(rects3)
+    
+    fig.tight_layout()
+
+    plt.show()
+    
+    ########## Analyze response distribution ##########
+    
     responses = np.array([person['responses'] for person in people])
     print(responses)
     
@@ -99,7 +247,7 @@ def analyzeData(people):
     for q in range(len(responses[0])):
         # TODO: add percentage labels for each bin (plt.annotate)
         axs[q // 5, q % 5].hist(responses[:, q], bins=5)
-        axs[q // 5, q % 5].set_title(f"Question {q}")
+        axs[q // 5, q % 5].set_title(f'Question {q}')
         axs[q // 5, q % 5].xaxis.set_major_locator(MaxNLocator(integer=True))
         axs[q // 5, q % 5].yaxis.set_major_locator(MaxNLocator(integer=True))
         
@@ -159,10 +307,12 @@ def match(people):
     return matches
 
 def main():
-    people = loadData('data/Athlete Mingle_February 10, 2021_21.20.csv')
+    filenames = [f for f in os.listdir('data') if f.startswith('Athlete')]
+    filename = 'data/' + max(filenames)
+    people = loadData(filename)
     people = cleanData(people)
     analyzeData(people)
-    matches = match(people)
+    # matches = match(people)
 
 if __name__ == '__main__':
     main()
