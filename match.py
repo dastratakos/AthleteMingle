@@ -54,12 +54,8 @@ Each row has the following columns:
 
 import csv
 import json
-import os
 
-# import matplotlib.pyplot as plt
-# from matplotlib.ticker import MaxNLocator
 import numpy as np
-# import seaborn as sb
 
 from plot import *
 
@@ -67,11 +63,9 @@ TEXT_FILE = 'data/Athlete Mingle_February 18, 2021_11.25.csv'
 NUMBER_FILE = 'data/Athlete Mingle_February 18, 2021_11.24.csv'
 OUT_PATH = 'output/02-19/'
 
-SPORTS = {}
+SPORT_DATA = {}
 with open('sports.json') as f:
-    SPORTS = json.load(f)
-
-print(SPORTS)
+    SPORT_DATA = json.load(f)
 
 # TODO: TAKE OUT KRISTEN
 
@@ -88,9 +82,8 @@ def loadData():
             for res in row[25:54]:
                 if res == '':
                     skip_ids.append(row[8])
-                
-        # for i, header in enumerate(column_headers):
-        #     print(f"{i}: {header}")
+                    break
+        
         i = 0
         for row in responses:
             if row[8] in skip_ids:
@@ -98,21 +91,21 @@ def loadData():
             
             person = {
                 'index': i,
-                'qualtrics_id': row[8],
+                'qualtrics id': row[8],
                 'start date': row[0],
                 'end date': row[1],
                 'meta data': {
                     'name': row[17].strip(),
                     'email': row[18],
-                    'sport_id': int(row[20]),
+                    'sport id': int(row[20]),
                 },
                 'athlete mingle': {
                     '1-on-1': row[22] == '1',
                     'friend': row[23],
                     'same grade': row[24] == '1',
+                    'speed-dating': row[54] == '1',
                 },
                 'responses': [int(x) for x in row[25:54]],
-                'speed-dating': row[54] == '1',
             }
             people.append(person)
             
@@ -120,26 +113,23 @@ def loadData():
             
     with open(TEXT_FILE) as f:
         _, column_headers, _, *responses = csv.reader(f)
-                
-        # for i, header in enumerate(column_headers):
-        #     print(f"{i}: {header}")
         
         i = 0
         for row in responses:
             if row[8] in skip_ids:
                 continue
             
-            assert people[i]['qualtrics_id'] == row[8]
+            assert people[i]['qualtrics id'] == row[8]
             
-            people[i]['meta_data']['year'] = row[19]
-            people[i]['meta_data']['sport_name'] = row[20]
-            people[i]['meta_data']['major'] = row[21]
+            people[i]['meta data']['year'] = row[19]
+            people[i]['meta data']['sport name'] = row[20]
+            people[i]['meta data']['major'] = row[21]
             
             i += 1
             
     print(f'There were {len(people)} responses ' + \
           f'and {len(skip_ids)} unfinished surveys.')
-    print(json.dumps(people[-1], indent=4))
+    # print(json.dumps(people[-1], indent=4))
     
     return people
 
@@ -148,30 +138,30 @@ def loadData():
 def analyzeData(people):
     print(f"\n{'=' * 10} Analyzing data {'=' * 10}")
     
-    year_labels = ['Frosh', 'Sophomore', 'Junior', 'Senior', '5th Year/Coterm']
-    sport_labels = [sport['sport'] for sport in SPORTS.values()]
+    year_labels = ['Frosh', 'Sophomore', 'Junior', 'Senior', '5th year/Coterm']
+    sport_labels = [sport['sport'] for sport in SPORT_DATA.values()]
     gender_labels = ['Men', 'Women', 'Co-Ed']
     
     
     ########## Analyze years ##########
     
     years = [person['meta data']['year'] for person in people]
-    counts = [years.count(i) for i in range(1, len(year_labels) + 1)]
+    counts = [years.count(y) for y in year_labels]
     
     plotYears(year_labels, counts, out_path=f'{OUT_PATH}/years.png')
         
     ########## Analyze sports ##########
     
-    res_sports = [person['meta data']['sport_name'] for person in people]
-    counts = [res_sports.count(label) for label in sport_labels]
+    sports = [person['meta data']['sport name'] for person in people]
+    counts = [sports.count(label) for label in sport_labels]
     
     plotSports(sport_labels, counts, out_path=f'{OUT_PATH}sports.png')
     
     ########## Analyze genders ##########
     
     counts = [0, 0, 0]
-    for res in res_sports:
-        for sport in SPORTS.values():
+    for res in sports:
+        for sport in SPORT_DATA.values():
             if sport['sport'] == res:
                 counts[gender_labels.index(sport['gender'])] += 1
     
@@ -179,16 +169,16 @@ def analyzeData(people):
     
     ########## Analyze year/gender ##########
     
-    counts = np.array((3, len(year_labels)))
+    counts = np.zeros((3, len(year_labels)), dtype='intc')
     
-    for y, s in zip(years, res_sports):
+    for y, s in zip(years, sports):
         gender = None
-        for sport in SPORTS.values():
+        for sport in SPORT_DATA.values():
             if sport['sport'] == s:
                 gender = sport['gender']
                 break
             
-        counts[gender_labels.index(gender)][y - 1] += 1
+        counts[gender_labels.index(gender)][year_labels.index(y)] += 1
 
     plotYearGender(year_labels, counts, out_path=f'{OUT_PATH}years-genders.png')
     
@@ -255,7 +245,7 @@ def match(people):
 
 def main():
     people = loadData()
-    # analyzeData(people)
+    analyzeData(people)
     # matches = match(people)
 
 # TODO: TAKE OUT KRISTEN

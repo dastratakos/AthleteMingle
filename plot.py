@@ -13,8 +13,21 @@ def autolabel(ax, rects):
         ax.annotate('{}'.format(height),
                     xy=(rect.get_x() + rect.get_width() / 2, height),
                     xytext=(0, 3),  # 3 points vertical offset
-                    textcoords="offset points",
+                    textcoords='offset points',
                     ha='center', va='bottom')
+
+def autolabelh(ax, rects):
+    """
+    Helper function.
+    Attach a text label above each bar in *rects*, displaying its height.
+    """
+    for rect in rects:
+        width = rect.get_width()
+        ax.annotate('{}'.format(width),
+                    xy=(width, rect.get_y() + rect.get_height() / 2),
+                    xytext=(3, 0),  # 3 points horizontal offset
+                    textcoords='offset points',
+                    ha='left', va='center')
 
 def plotHeatMap(scores, out_path):
     # TODO: check if need plt
@@ -36,14 +49,14 @@ def plotResponses(responses, out_path):
         
     plt.savefig(out_path)
     
-def plotYearGender(labels, men_count, women_count, coed_count, out_path):
+def plotYearGender(labels, counts, out_path):
     x = np.arange(len(labels))  # the label locations
     width = 0.2  # the width of the bars
 
     fig, ax = plt.subplots()
-    rects1 = ax.bar(x - width, men_count, width, label='Men', color='#Bf0A30')
-    rects2 = ax.bar(x, women_count, width, label='Women', color='#4298B5')
-    rects3 = ax.bar(x + width, coed_count, width, label='Co-Ed', color='#7F7776')
+    rects1 = ax.bar(x - width, counts[0], width, label='Men', color='#Bf0A30')
+    rects2 = ax.bar(x, counts[1], width, label='Women', color='#4298B5')
+    rects3 = ax.bar(x + width, counts[2], width, label='Co-Ed', color='#7F7776')
 
     # Add some text for labels, title and custom x-axis tick labels, etc.
     ax.set_ylabel('Responses')
@@ -79,13 +92,15 @@ def plotSports(labels, counts, out_path):
     
     # TODO: set plt dimensions
     
-    ax.barh(range(len(counts)), counts, color='#Bf0A30')
+    rects = ax.barh(range(len(counts)), counts, color='#Bf0A30')
     ax.invert_yaxis()
     plt.ylabel('Sport')
     plt.xlabel('Responses')
     plt.title('Athlete Mingle Sport Distribution')
 
     plt.yticks(range(len(counts)), labels)
+    
+    autolabelh(ax, rects)
 
     # plt.show()
     plt.savefig(out_path)
