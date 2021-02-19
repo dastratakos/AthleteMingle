@@ -63,6 +63,8 @@ import numpy as np
 
 from plot import *
 
+TEXT_FILE = 'data/Athlete Mingle_February 18, 2021_11.25.csv'
+NUMBER_FILE = 'data/Athlete Mingle_February 18, 2021_11.24.csv'
 OUT_PATH = 'output/02-19/'
 
 SPORTS = {}
@@ -71,58 +73,77 @@ with open('sports.json') as f:
 
 print(SPORTS)
 
-def get_entry(entry):
-    return int(entry) if data_file['numeric'] else entry
+# TODO: TAKE OUT KRISTEN
 
 def loadData():
     print(f"{'=' * 10} Loading data {'=' * 10}")
-    
-    filename = data_file['filename']
-    
+        
     people = []
+    skip_ids = []
     
-    with open(filename) as f:
-        question_ids, questions, _, *responses = csv.reader(f)
+    with open(NUMBER_FILE) as f:
+        _, column_headers, _, *responses = csv.reader(f)
         
-        data_file['numeric'] = responses[2][19].isnumeric()
-        
-        # for i, column in enumerate(questions):
-        #     print(f"{i}: {column}")
-        
-        for person_id, row in enumerate(responses):
+        for row in responses:
+            for res in row[25:54]:
+                if res == '':
+                    skip_ids.append(row[8])
+                
+        # for i, header in enumerate(column_headers):
+        #     print(f"{i}: {header}")
+        i = 0
+        for row in responses:
+            if row[8] in skip_ids:
+                continue
+            
             person = {
-                'id': person_id,
+                'index': i,
+                'qualtrics_id': row[8],
                 'start date': row[0],
                 'end date': row[1],
-                'qualtrics_id': row[8],
                 'meta data': {
-                    'name': row[17],
+                    'name': row[17].strip(),
                     'email': row[18],
-                    'year': get_entry(row[19]),
-                    # 'gender': sports[row[20]]["gender"],
-                    # 'sport': sports[row[20]]["sport"],
-                    'sport': get_entry(row[20]),
-                    'major': get_entry(row[21]),
+                    'sport_id': int(row[20]),
                 },
                 'athlete mingle': {
-                    '1-on-1': get_entry(row[22]),
+                    '1-on-1': row[22] == '1',
                     'friend': row[23],
-                    'same grade': get_entry(row[24]),
+                    'same grade': row[24] == '1',
                 },
-                'responses': [get_entry(x) for x in row[25:54]],
-                'speed-dating': get_entry(row[54])
+                'responses': [int(x) for x in row[25:54]],
+                'speed-dating': row[54] == '1',
             }
             people.append(person)
             
-    print(f'There were {len(people)} responses')
-    # print(json.dumps(people[-1], indent=4))
+            i += 1
+            
+    with open(TEXT_FILE) as f:
+        _, column_headers, _, *responses = csv.reader(f)
+                
+        # for i, header in enumerate(column_headers):
+        #     print(f"{i}: {header}")
+        
+        i = 0
+        for row in responses:
+            if row[8] in skip_ids:
+                continue
+            
+            assert people[i]['qualtrics_id'] == row[8]
+            
+            people[i]['meta_data']['year'] = row[19]
+            people[i]['meta_data']['sport_name'] = row[20]
+            people[i]['meta_data']['major'] = row[21]
+            
+            i += 1
+            
+    print(f'There were {len(people)} responses ' + \
+          f'and {len(skip_ids)} unfinished surveys.')
+    print(json.dumps(people[-1], indent=4))
     
     return people
 
-def cleanData(people):
-    print(f"\n{'=' * 10} Cleaning data {'=' * 10}")
-    
-    return people
+# TODO: TAKE OUT KRISTEN
 
 def analyzeData(people):
     print(f"\n{'=' * 10} Analyzing data {'=' * 10}")
@@ -177,6 +198,8 @@ def analyzeData(people):
     
     plotResponses(responses, out_path=f'{OUT_PATH}responses.png')
 
+# TODO: TAKE OUT KRISTEN
+
 def computeSimilarity(person1, person2):
     """
     Returns the percentage of questions that were answered the same.
@@ -188,6 +211,8 @@ def computeSimilarity(person1, person2):
     responses2 = np.array(person2['responses'])
     
     return np.count_nonzero(responses1 == responses2) / len(responses1)
+
+# TODO: TAKE OUT KRISTEN
 
 def match(people):
     print(f"\n{'=' * 10} Making matches {'=' * 10}")
@@ -229,18 +254,13 @@ def match(people):
     return matches
 
 def main():
-    global data_file
-    data_file = {}
-    
-    filenames = sorted(
-        [f for f in os.listdir('data') if f.startswith('Athlete Mingle')],
-        reverse=True)
-    data_file['filename'] = 'data/' + filenames[0]
-
     people = loadData()
-    people = cleanData(people)
-    analyzeData(people)
+    # analyzeData(people)
     # matches = match(people)
+
+# TODO: TAKE OUT KRISTEN
 
 if __name__ == '__main__':
     main()
+    
+# TODO: TAKE OUT KRISTEN
