@@ -30,14 +30,14 @@ def autolabelh(ax, rects):
                     ha='left', va='center')
 
 def plotHeatMap(scores, out_path):
-    # TODO: check if need plt
     plt.subplots(figsize=(11, 9))
     sb.heatmap(scores, annot=True)
     plt.savefig(out_path)
+    plt.close()
     
 def plotResponses(responses, out_path):
     fig, axs = plt.subplots(6, 5)
-    fig.set_size_inches(18.5, 10.5)
+    fig.set_size_inches(37, 11)
     plt.subplots_adjust(left=0.05, right=0.95, hspace=0.6)
     
     for q in range(len(responses[0])):
@@ -46,8 +46,10 @@ def plotResponses(responses, out_path):
         axs[q // 5, q % 5].set_title(f'Question {q}')
         axs[q // 5, q % 5].xaxis.set_major_locator(MaxNLocator(integer=True))
         axs[q // 5, q % 5].yaxis.set_major_locator(MaxNLocator(integer=True))
-        
+    
+    # plt.show()
     plt.savefig(out_path)
+    plt.close()
     
 def plotYearGender(labels, counts, out_path):
     x = np.arange(len(labels))  # the label locations
@@ -73,6 +75,7 @@ def plotYearGender(labels, counts, out_path):
 
     # plt.show()
     plt.savefig(out_path)
+    plt.close()
     
 def plotGenders(labels, counts, out_path):
     fig, ax = plt.subplots()
@@ -86,11 +89,13 @@ def plotGenders(labels, counts, out_path):
 
     # plt.show()
     plt.savefig(out_path)
+    plt.close()
     
 def plotSports(labels, counts, out_path):
     fig, ax = plt.subplots()
     
-    # TODO: set plt dimensions
+    fig.set_size_inches(18.5, 10.5)
+    plt.subplots_adjust(left=0.2)
     
     rects = ax.barh(range(len(counts)), counts, color='#Bf0A30')
     ax.invert_yaxis()
@@ -104,6 +109,27 @@ def plotSports(labels, counts, out_path):
 
     # plt.show()
     plt.savefig(out_path)
+    plt.close()
+
+def plotMajors(labels, counts, out_path):
+    fig, ax = plt.subplots()
+    
+    fig.set_size_inches(18.5, 10.5)
+    plt.subplots_adjust(left=0.2)
+    
+    rects = ax.barh(range(len(counts)), counts, color='#Bf0A30')
+    ax.invert_yaxis()
+    plt.ylabel('Majors')
+    plt.xlabel('Responses')
+    plt.title('Athlete Mingle Major Distribution')
+
+    plt.yticks(range(len(counts)), labels)
+    
+    autolabelh(ax, rects)
+
+    # plt.show()
+    plt.savefig(out_path)
+    plt.close()
     
 def plotYears(labels, counts, out_path):
     plt.bar(range(len(counts)), counts, color='#Bf0A30')
@@ -114,3 +140,4 @@ def plotYears(labels, counts, out_path):
     plt.xticks(range(len(counts)), labels)
 
     plt.savefig(out_path)
+    plt.close()
