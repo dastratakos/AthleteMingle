@@ -56,6 +56,7 @@ import csv
 import json
 
 import numpy as np
+from tqdm import tqdm
 
 from plot import *
 
@@ -139,6 +140,26 @@ def analyzeData(people):
     print(f"\n{'=' * 10} Analyzing data {'=' * 10}")
     
     year_labels = ['Frosh', 'Sophomore', 'Junior', 'Senior', '5th year/Coterm']
+    major_labels = [
+        'Aeronautics and Astronautics',
+        'Biology',
+        'Chemistry',
+        'Computer Science',
+        'Earth Systems',
+        'Econ',
+        'Engineering',
+        'English',
+        'History',
+        'Human Biology',
+        'MS&E',
+        'Physics',
+        'Political Science',
+        'Product Design',
+        'Psychology',
+        'STS',
+        'SymSys',
+        'Other'
+    ]
     sport_labels = [sport['sport'] for sport in SPORT_DATA.values()]
     gender_labels = ['Men', 'Women', 'Co-Ed']
     
@@ -150,6 +171,13 @@ def analyzeData(people):
     
     plotYears(year_labels, counts, out_path=f'{OUT_PATH}/years.png')
         
+    ########## Analyze majors ##########
+    
+    majors = [person['meta data']['major'] for person in people]
+    counts = [majors.count(label) for label in major_labels]
+    
+    plotMajors(major_labels, counts, out_path=f'{OUT_PATH}majors.png')
+    
     ########## Analyze sports ##########
     
     sports = [person['meta data']['sport name'] for person in people]
@@ -180,7 +208,7 @@ def analyzeData(people):
             
         counts[gender_labels.index(gender)][year_labels.index(y)] += 1
 
-    plotYearGender(year_labels, counts, out_path=f'{OUT_PATH}years-genders.png')
+    plotYearGender(year_labels, counts, out_path=f'{OUT_PATH}yearsGenders.png')
     
     ########## Analyze response distribution ##########
     
@@ -195,7 +223,7 @@ def computeSimilarity(person1, person2):
     Returns the percentage of questions that were answered the same.
     """
     # check if person1 and person2 are the same person
-    if person1['qualtrics_id'] == person2['qualtrics_id']: return 0
+    if person1['qualtrics id'] == person2['qualtrics id']: return 0
     
     responses1 = np.array(person1['responses'])
     responses2 = np.array(person2['responses'])
@@ -208,45 +236,71 @@ def match(people):
     print(f"\n{'=' * 10} Making matches {'=' * 10}")
     
     # compute compatibilities
+    print('Computing compatibilities')
     scores = np.zeros((len(people), len(people)))
-    for i, person1 in enumerate(people):
-        for j, person2 in enumerate(people):
-            scores[i][j] = computeSimilarity(person1, person2)
+    with tqdm(total=len(people)) as progress_bar:
+        for i, person1 in enumerate(people):
+            progress_bar.update()
+            for j, person2 in enumerate(people):
+                scores[i][j] = computeSimilarity(person1, person2)
     
     print(scores)
+    # print('Plotting heat map')
+    # plotHeatMap(scores, out_path=f'{OUT_PATH}confusion_matrix.png')
     print()
-    plotHeatMap(scores, out_path=f'{OUT_PATH}confusion_matrix.png')
     
     # select best overall pairs
     """
     Greedy algorithm: find the highest match, then pair those two and remove
     from set of matches.
     """
+    print('Creating matches')
     unmatched = set(range(len(people)))
     matches = []
-    while (len(unmatched) > 1):
-        ind = np.unravel_index(np.argmax(scores, axis=None), scores.shape)
-        matches.append([ind, scores[ind]])
-        
-        for i in ind:
-            scores[i, :] = -1
-            scores[:, i] = -1
-            unmatched.remove(i)
-        
-    community_score = 0.0
-    for match in matches:
-        print(f"Person {match[0][0]} matched with Person {match[0][1]} ({match[1]:.4%})")
-        community_score += match[1]
-    community_score /= len(matches)
+    with tqdm(total=len(unmatched)) as progress_bar:
+        while (len(unmatched) > 1):
+            ind = np.unravel_index(np.argmax(scores, axis=None), scores.shape)
+            matches.append([ind, scores[ind]])
+            
+            for i in ind:
+                scores[i, :] = -1
+                scores[:, i] = -1
+                unmatched.remove(i)
+                progress_bar.update()
     
-    print(f"\nCommunity score: {community_score:.4%}")
+    with open(f'{OUT_PATH}matches.csv', 'w') as f:
+        f.write('p1 id,p1 name,p1 email,p1 sport,' + \
+                'p2 id,p2 name,p2 email,p2 sport,' + \
+                'score')
+        
+        community_score = 0.0
+        
+        for match in matches:
+            p1, p2 = match[0]
+            p1_info = people[p1]['meta data']
+            p2_info = people[p2]['meta data']
+            
+            print(f"Person {p1} matched with Person {p2} ({match[1]:.4%})")
+            f.write(f"{p1},{p1_info['name']},{p1_info['email']}," + \
+                    f"{p1_info['sport name']}," + \
+                    f"{p2},{p2_info['name']},{p2_info['email']}," + \
+                    f"{p2_info['sport name']}," + \
+                    f"{match[1]:.4%}\n")
+            
+            community_score += match[1]
+            
+        community_score /= len(matches)
+        
+        message = f"\nCommunity score: {community_score:.4%}"
+        print(message)
+        f.write(message)
     
     return matches
 
 def main():
     people = loadData()
     analyzeData(people)
-    # matches = match(people)
+    matches = match(people)
 
 # TODO: TAKE OUT KRISTEN
 
