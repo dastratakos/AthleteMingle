@@ -37,15 +37,38 @@ def plotHeatMap(scores, out_path):
     
 def plotResponses(responses, out_path):
     fig, axs = plt.subplots(6, 5)
-    fig.set_size_inches(37, 11)
+    fig.set_size_inches(30, 11)
     plt.subplots_adjust(left=0.05, right=0.95, hspace=0.6)
     
     for q in range(len(responses[0])):
         # TODO: add percentage labels for each bin (plt.annotate)
-        axs[q // 5, q % 5].hist(responses[:, q], bins=5)
+        freq, bins, patches = axs[q // 5, q % 5].hist(responses[:, q], bins=5)
         axs[q // 5, q % 5].set_title(f'Question {q}')
         axs[q // 5, q % 5].xaxis.set_major_locator(MaxNLocator(integer=True))
         axs[q // 5, q % 5].yaxis.set_major_locator(MaxNLocator(integer=True))
+        axs[q // 5, q % 5].set_ylim((0, 300))
+    
+        # x coordinate for labels
+        bin_centers = np.diff(bins) * 0.5 + bins[:-1]
+
+        n = 0
+        for fr, x, patch in zip(freq, bin_centers, patches):
+            height = int(fr)
+            axs[q // 5, q % 5].annotate("{}".format(height),
+                                        xy = (x, height),             # top left corner of the histogram bar
+                                        xytext = (0, 10),             # offsetting label position above its bar
+                                        textcoords = "offset points", # Offset (in points) from the *xy* value
+                                        ha = 'center', va = 'bottom',
+                                        fontsize=10
+                                        )
+            axs[q // 5, q % 5].annotate(f"{height / 327:.1%}",
+                                        xy = (x, height),             # top left corner of the histogram bar
+                                        xytext = (0, 0.2),             # offsetting label position above its bar
+                                        textcoords = "offset points", # Offset (in points) from the *xy* value
+                                        ha = 'center', va = 'bottom',
+                                        fontsize=8
+                                        )
+            n = n + 1
     
     # plt.show()
     plt.savefig(out_path)

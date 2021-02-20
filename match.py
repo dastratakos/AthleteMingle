@@ -79,6 +79,9 @@ def loadData():
     with open(NUMBER_FILE) as f:
         _, column_headers, _, *responses = csv.reader(f)
         
+        for i, column in enumerate(column_headers[25:54]):
+            print(f"{i}: {column}")
+        
         for row in responses:
             for res in row[25:54]:
                 if res == '':
@@ -169,21 +172,21 @@ def analyzeData(people):
     years = [person['meta data']['year'] for person in people]
     counts = [years.count(y) for y in year_labels]
     
-    plotYears(year_labels, counts, out_path=f'{OUT_PATH}/years.png')
+    # plotYears(year_labels, counts, out_path=f'{OUT_PATH}/years.png')
         
     ########## Analyze majors ##########
     
     majors = [person['meta data']['major'] for person in people]
     counts = [majors.count(label) for label in major_labels]
     
-    plotMajors(major_labels, counts, out_path=f'{OUT_PATH}majors.png')
+    # plotMajors(major_labels, counts, out_path=f'{OUT_PATH}majors.png')
     
     ########## Analyze sports ##########
     
     sports = [person['meta data']['sport name'] for person in people]
     counts = [sports.count(label) for label in sport_labels]
     
-    plotSports(sport_labels, counts, out_path=f'{OUT_PATH}sports.png')
+    # plotSports(sport_labels, counts, out_path=f'{OUT_PATH}sports.png')
     
     ########## Analyze genders ##########
     
@@ -193,7 +196,7 @@ def analyzeData(people):
             if sport['sport'] == res:
                 counts[gender_labels.index(sport['gender'])] += 1
     
-    plotGenders(gender_labels, counts, out_path=f'{OUT_PATH}genders.png')
+    # plotGenders(gender_labels, counts, out_path=f'{OUT_PATH}genders.png')
     
     ########## Analyze year/gender ##########
     
@@ -208,7 +211,7 @@ def analyzeData(people):
             
         counts[gender_labels.index(gender)][year_labels.index(y)] += 1
 
-    plotYearGender(year_labels, counts, out_path=f'{OUT_PATH}yearsGenders.png')
+    # plotYearGender(year_labels, counts, out_path=f'{OUT_PATH}yearsGenders.png')
     
     ########## Analyze response distribution ##########
     
@@ -218,15 +221,18 @@ def analyzeData(people):
 
 # TODO: TAKE OUT KRISTEN
 
-def computeSimilarity(person1, person2):
+def computeSimilarity(p1, p2):
     """
     Returns the percentage of questions that were answered the same.
     """
-    # check if person1 and person2 are the same person
-    if person1['qualtrics id'] == person2['qualtrics id']: return 0
+    # check if p1 and p2 are the same person
+    if p1['qualtrics id'] == p2['qualtrics id']: return -1
+
+    # check if they are on the same team
+    if p1['meta data']['sport name'] == p2['meta data']['sport name']: return -1
     
-    responses1 = np.array(person1['responses'])
-    responses2 = np.array(person2['responses'])
+    responses1 = np.array(p1['responses'])
+    responses2 = np.array(p2['responses'])
     
     return np.count_nonzero(responses1 == responses2) / len(responses1)
 
@@ -235,13 +241,21 @@ def computeSimilarity(person1, person2):
 def match(people):
     print(f"\n{'=' * 10} Making matches {'=' * 10}")
     
+    one_on_one = []
+    group = []
+    for person in people:
+        if person['athlete mingle']['1-on-1']:
+            one_on_one.append(person)
+        else:
+            group.append(person)
+    
     # compute compatibilities
     print('Computing compatibilities')
-    scores = np.zeros((len(people), len(people)))
-    with tqdm(total=len(people)) as progress_bar:
-        for i, person1 in enumerate(people):
+    scores = np.zeros((len(one_on_one), len(one_on_one)))
+    with tqdm(total=len(one_on_one)) as progress_bar:
+        for i, person1 in enumerate(one_on_one):
             progress_bar.update()
-            for j, person2 in enumerate(people):
+            for j, person2 in enumerate(one_on_one):
                 scores[i][j] = computeSimilarity(person1, person2)
     
     print(scores)
@@ -255,7 +269,7 @@ def match(people):
     from set of matches.
     """
     print('Creating matches')
-    unmatched = set(range(len(people)))
+    unmatched = set(range(len(one_on_one)))
     matches = []
     with tqdm(total=len(unmatched)) as progress_bar:
         while (len(unmatched) > 1):
@@ -268,10 +282,10 @@ def match(people):
                 unmatched.remove(i)
                 progress_bar.update()
     
-    with open(f'{OUT_PATH}matches.csv', 'w') as f:
+    with open(f'{OUT_PATH}matches_1-on-1.csv', 'w') as f:
         f.write('p1 id,p1 name,p1 email,p1 sport,' + \
                 'p2 id,p2 name,p2 email,p2 sport,' + \
-                'score')
+                'score\n')
         
         community_score = 0.0
         
@@ -300,7 +314,7 @@ def match(people):
 def main():
     people = loadData()
     analyzeData(people)
-    matches = match(people)
+    # matches = match(people)
 
 # TODO: TAKE OUT KRISTEN
 
@@ -308,3 +322,13 @@ if __name__ == '__main__':
     main()
     
 # TODO: TAKE OUT KRISTEN
+
+# TODO: take out group people
+# TODO: take out same sport diff gender
+# TODO: check same grade
+# TODO: squish closer to 100% match
+# TODO: max grade diff = 2
+# TODO: add one question that was the same
+# TODO: TS no FH, Gym
+
+# download question data and percentages and send to data (4) and graphics (1) team
