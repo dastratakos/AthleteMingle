@@ -1,126 +1,118 @@
 {
-    "1": {
-        "sport": "Baseball",
-        "gender": "Men"
+    "Baseball": {
+        "gender": "Men",
+        "counterpart": "Softball"
     },
-    "2": {
-        "sport": "Men's Basketball",
-        "gender": "Men"
+    "Men's Basketball": {
+        "gender": "Men",
+        "counterpart": "Women's Basketball"
     },
-    "3": {
-        "sport": "Women's Basketball",
-        "gender": "Women"
+    "Women's Basketball": {
+        "gender": "Women",
+        "counterpart": "Men's Basketball"
     },
-    "4": {
-        "sport": "Men's XC/TF",
-        "gender": "Men"
+    "Men's XC/TF": {
+        "gender": "Men",
+        "counterpart": "Women's XC/TF"
     },
-    "5": {
-        "sport": "Women's XC/TF",
-        "gender": "Women"
+    "Women's XC/TF": {
+        "gender": "Women",
+        "counterpart": "Men's XC/TF"
     },
-    "6": {
-        "sport": "Fencing",
+    "Fencing": {
         "gender": "Co-Ed"
     },
-    "7": {
-        "sport": "Field Hockey",
+    "Field Hockey": {
         "gender": "Women"
     },
-    "8": {
-        "sport": "Football",
+    "Football": {
         "gender": "Men"
     },
-    "9": {
-        "sport": "Men's Golf",
-        "gender": "Men"
+    "Men's Golf": {
+        "gender": "Men",
+        "counterpart": "Women's Golf"
     },
-    "10": {
-        "sport": "Women's Golf",
+    "Women's Golf": {
+        "gender": "Women",
+        "counterpart": "Men's Golf"
+    },
+    "Men's Gymnastics": {
+        "gender": "Men",
+        "counterpart": "Women's Gymnastics"
+    },
+    "Women's Gymnastics": {
+        "gender": "Women",
+        "counterpart": "Men's Gymnastics"
+    },
+    "Lacrosse": {
         "gender": "Women"
     },
-    "11": {
-        "sport": "Men's Gymnastics",
-        "gender": "Men"
+    "Men's Rowing": {
+        "gender": "Men",
+        "counterpart": "Women's Rowing"
     },
-    "12": {
-        "sport": "Women's Gymnastics",
-        "gender": "Women"
+    "Women's Rowing": {
+        "gender": "Women",
+        "counterpart": "Men's Rowing"
     },
-    "13": {
-        "sport": "Lacrosse",
-        "gender": "Women"
-    },
-    "14": {
-        "sport": "Men's Rowing",
-        "gender": "Men"
-    },
-    "15": {
-        "sport": "Women's Rowing",
-        "gender": "Women"
-    },
-    "16": {
-        "sport": "Sailing",
+    "Sailing": {
         "gender": "Co-Ed"
     },
-    "17": {
-        "sport": "Men's Soccer",
-        "gender": "Men"
+    "Men's Soccer": {
+        "gender": "Men",
+        "counterpart": "Women's Soccer"
     },
-    "18": {
-        "sport": "Women's Soccer",
-        "gender": "Women"
+    "Women's Soccer": {
+        "gender": "Women",
+        "counterpart": "Men's Soccer"
     },
-    "19": {
-        "sport": "Softball",
-        "gender": "Women"
+    "Softball": {
+        "gender": "Women",
+        "counterpart": "Baseball"
     },
-    "20": {
-        "sport": "Squash",
+    "Squash": {
         "gender": "Co-Ed"
     },
-    "21": {
-        "sport": "Synchro",
+    "Synchro": {
         "gender": "Women"
     },
-    "22": {
-        "sport": "Men's Swimming/Diving",
-        "gender": "Men"
+    "Men's Swimming/Diving": {
+        "gender": "Men",
+        "counterpart": "Women's Swimming/Diving"
     },
-    "23": {
-        "sport": "Women's Swimming/Diving",
-        "gender": "Women"
+    "Women's Swimming/Diving": {
+        "gender": "Women",
+        "counterpart": "Men's Swimming/Diving"
     },
-    "24": {
-        "sport": "Men's Tennis",
-        "gender": "Men"
+    "Men's Tennis": {
+        "gender": "Men",
+        "counterpart": "Women's Tennis"
     },
-    "25": {
-        "sport": "Women's Tennis",
-        "gender": "Women"
+    "Women's Tennis": {
+        "gender": "Women",
+        "counterpart": "Men's Tennis"
     },
-    "26": {
-        "sport": "Men's Volleyball",
-        "gender": "Men"
+    "Men's Volleyball": {
+        "gender": "Men",
+        "counterpart": "Women's Volleyball"
     },
-    "27": {
-        "sport": "Women's Volleyball",
-        "gender": "Women"
+    "Women's Volleyball": {
+        "gender": "Women",
+        "counterpart": "Beach Volleyball"
     },
-    "28": {
-        "sport": "Beach Volleyball",
-        "gender": "Women"
+    "Beach Volleyball": {
+        "gender": "Women",
+        "counterpart": "Men's Volleyball"
     },
-    "29": {
-        "sport": "Men's Water Polo",
-        "gender": "Men"
+    "Men's Water Polo": {
+        "gender": "Men",
+        "counterpart": "Women's Water Polo"
     },
-    "30": {
-        "sport": "Women's Water Polo",
-        "gender": "Women"
+    "Women's Water Polo": {
+        "gender": "Women",
+        "counterpart": "Men's Water Polo"
     },
-    "31": {
-        "sport": "Wrestling",
+    "Wrestling": {
         "gender": "Men"
     }
 }
