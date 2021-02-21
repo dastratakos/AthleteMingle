@@ -232,9 +232,10 @@ def computeSimilarity(p1, p2, same_gender_ok=False, same_sport_ok=False):
     penalties = 0
 
     if not same_gender_ok:
-        if SPORT_DATA[p1['meta data']['sport name']]['gender'] == SPORT_DATA[p2['meta data']['sport name']]['gender']:
-            if random.random() < 0.7:
-                penalties += -0.4
+        gender1 = SPORT_DATA[p1['meta data']['sport name']]['gender']
+        gender2 = SPORT_DATA[p2['meta data']['sport name']]['gender']
+        if gender1 == gender2 and random.random() < 0.7:
+            penalties += -0.4
 
     if p1['athlete mingle']['same grade'] or p2['athlete mingle']['same grade']:
         if p1['meta data']['year'] != p2['meta data']['year']:
