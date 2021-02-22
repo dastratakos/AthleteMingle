@@ -99,8 +99,8 @@ def loadData():
                 'start date': row[0],
                 'end date': row[1],
                 'meta data': {
-                    'name': row[17].strip(),
-                    'email': row[18],
+                    'name': ' '.join(row[17].strip().split()).title(),
+                    'email': row[18].strip().lower(),
                     'sport id': int(row[20]),
                 },
                 'athlete mingle': {
@@ -234,8 +234,12 @@ def computeSimilarity(p1, p2, same_gender_ok=False, same_sport_ok=False):
     if not same_gender_ok:
         gender1 = SPORT_DATA[p1['meta data']['sport name']]['gender']
         gender2 = SPORT_DATA[p2['meta data']['sport name']]['gender']
-        if gender1 == gender2 and random.random() < 0.7:
+        if gender1 == gender2 and random.random() < 0.9:
             penalties += -0.4
+        if p1['meta data']['sport name'] == "Men's Tennis" and gender2 != "Women":
+            return -1.5
+        elif p2['meta data']['sport name'] == "Men's Tennis" and gender1 != "Women":
+            return -1.5
 
     if p1['athlete mingle']['same grade'] or p2['athlete mingle']['same grade']:
         if p1['meta data']['year'] != p2['meta data']['year']:
@@ -479,6 +483,10 @@ def match(people):
                 'score,question,response\n')
         
         community_score = 0.0
+        ok_count = 0
+        male_male_count = 0
+        female_female_count = 0
+        coed_count = 0
         
         for match in matches:
             p1_id, p2_id = match[0]
@@ -490,6 +498,17 @@ def match(people):
             p2_info = p2['meta data']
             
             question_num, response = findSimilarResponse(p1, p2)
+            
+            gender1 = SPORT_DATA[p1['meta data']['sport name']]['gender']
+            gender2 = SPORT_DATA[p2['meta data']['sport name']]['gender']
+            if gender1 != gender2:
+                ok_count += 1
+            elif gender1 == "Men":
+                male_male_count += 1
+            elif gender2 == "Women":
+                female_female_count += 1
+            elif gender2 == "Co-Ed":
+                coed_count += 1
             
             print(f"Person {p1_id}".ljust(9) + f" matched with " + \
                   f"Person {p2_id}".ljust(9) + f" ({match[1]:.4%})")
@@ -504,6 +523,11 @@ def match(people):
             community_score += match[1]
             
         community_score /= len(matches)
+        
+        print(f'{ok_count} male-female')
+        print(f'{male_male_count} male-male')
+        print(f'{female_female_count} female-female')
+        print(f'{coed_count} coed-coed')
         
         message = f"\nCommunity score: {community_score:.4%}"
         print(message)
@@ -525,16 +549,64 @@ def findSimilarResponse(p1, p2):
     
     return question_num, response
 
+def findPerson(target_name, people):
+    for person in people:
+        if person['meta data']['name'] == target_name:
+            return person
+
+def fineTune(people):
+    new_matches_one_on_one = [
+        ("Will Richmond", "Dani Jacobstein"),
+        ("Matt Szot", "Hari Sathyamurthy"),
+        ("Keegan Tingey", "Katelin Gildersleeve"),
+        ("Zoe Bartel", "Alexandre Rotsaert"),
+        ("Ryan Ludwick", "Julia Cooper"),
+        ("Nick Stemmet", "Soren Jensen"),
+        ("Ashten Prechtel", "Chloe Harbilas"),
+        ("Jaimi Salone", "Kyra Pelton"),
+        ("Tatum Boyd", "Lucy Black"),
+        ("Isaac Love", "Abby Converse")
+    ]
+    
+    new_matches_group = [
+        ("Connor Evans", "Chloe Doyle"),
+        ("Aiden Weaver", "Brandon Nguyen")
+    ]
+    
+    print('=' * 20 + ' One-on-ones ' + '=' * 20 + '\n')
+    for name1, name2 in new_matches_one_on_one:
+        p1 = findPerson(name1, people)
+        p2 = findPerson(name2, people)
+        
+        print(f"{name1} ({p1['meta data']['sport name']})".ljust(40) + \
+              f"{name2} ({p2['meta data']['sport name']})")
+        similarity = computeSimilarity(p1, p2)
+        similarity = .5 if similarity < 0 else similarity
+        new_similarity = .5115 * similarity + .5561
+        print(f"\tSimilarity: {new_similarity:.4%}")
+        q, r = findSimilarResponse(p1, p2)
+        print(f"\tQuestion: {q} {r}\n")
+        
+    print('\n' + '=' * 20 + ' Groups ' + '=' * 20 + '\n')
+    for name1, name2 in new_matches_group:
+        p1 = findPerson(name1, people)
+        p2 = findPerson(name2, people)
+        
+        print(f"{name1} ({p1['meta data']['sport name']})".ljust(40) + \
+              f"{name2} ({p1['meta data']['sport name']})")
+        similarity = computeSimilarity(p1, p2)
+        similarity = .5 if similarity < 0 else similarity
+        new_similarity = .5115 * similarity + .5561
+        print(f"\tSimilarity: {new_similarity:.4%}")
+        q, r = findSimilarResponse(p1, p2)
+        print(f"\tQuestion: {q} {r}\n")
+        
+
 def main():
     people = loadData()
+    fineTune(people)
     # analyzeData(people)
-    matches = match(people)
+    # matches = match(people)
 
 if __name__ == '__main__':
     main()
-
-
-# TODO: squish closer to 100% match
-# TODO: TS no FH, Gym
-
-# download question data and percentages and send to data (4) and graphics (1) team
