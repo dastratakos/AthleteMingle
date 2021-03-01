@@ -75,7 +75,7 @@ MATCH_HEADER = 'p1 id,p1 name,p1 email,p1 sport,p1 year,p1 same grade,' + \
 ################################ Loading data #################################
 
 SPORT_DATA = {}
-with open('sports.json') as f:
+with open('data/sports.json') as f:
     SPORT_DATA = json.load(f)
 
 def loadData(verbose=False):

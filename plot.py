@@ -15,7 +15,7 @@ import numpy as np
 import seaborn as sb
 
 SPORT_DATA = {}
-with open('sports.json') as f:
+with open('data/sports.json') as f:
     SPORT_DATA = json.load(f)
 
 year_labels = ['Frosh', 'Sophomore', 'Junior', 'Senior', '5th year/Coterm']
