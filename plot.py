@@ -38,7 +38,7 @@ major_labels = [
     'Other'
 ]
 sport_labels = SPORT_DATA.keys()
-gender_labels = ['Men', 'Women', 'Co-Ed']
+kind_labels = ['Men', 'Women', 'Co-Ed']
 
 def autolabel(ax, rects):
     """
@@ -130,37 +130,37 @@ def plotSports(sports, out_path, interactive=False):
     else: plt.savefig(out_path)
     plt.close()
     
-def plotGenders(sports, out_path, interactive=False):
+def plotKinds(sports, out_path, interactive=False):
     counts = [0, 0, 0]
     for res in sports:
         for sport, sport_details in SPORT_DATA.items():
             if sport == res:
-                counts[gender_labels.index(sport_details['gender'])] += 1
+                counts[kind_labels.index(sport_details['kind'])] += 1
     
     # fig, ax = plt.subplots()
     
     plt.bar(range(len(counts)), counts, color='#Bf0A30')
-    plt.xlabel('Gender')
+    plt.xlabel('Kind')
     plt.ylabel('Responses')
-    plt.title('Athlete Mingle Gender Distribution')
+    plt.title('Athlete Mingle Kind Distribution')
 
-    plt.xticks(range(len(counts)), gender_labels)
+    plt.xticks(range(len(counts)), kind_labels)
 
     if interactive: plt.show()
     else: plt.savefig(out_path)
     plt.close()
     
-def plotYearGender(years, sports, out_path, interactive=False):
+def plotYearKind(years, sports, out_path, interactive=False):
     counts = np.zeros((3, len(year_labels)), dtype='intc')
     
     for y, s in zip(years, sports):
-        gender = None
+        kind = None
         for sport in SPORT_DATA.values():
             if sport['sport'] == s:
-                gender = sport['gender']
+                kind = sport['kind']
                 break
             
-        counts[gender_labels.index(gender)][year_labels.index(y)] += 1
+        counts[kind_labels.index(kind)][year_labels.index(y)] += 1
     
     x = np.arange(len(year_labels))
     width = 0.2
@@ -171,7 +171,7 @@ def plotYearGender(years, sports, out_path, interactive=False):
     rects3 = ax.bar(x + width, counts[2], width, label='Co-Ed', color='#7F7776')
 
     ax.set_ylabel('Responses')
-    ax.set_title('Athlete Mingle Year and Gender distributions')
+    ax.set_title('Athlete Mingle Year and Kind distributions')
     ax.set_xticks(x)
     ax.set_xticklabels(year_labels)
     ax.legend()

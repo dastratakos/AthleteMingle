@@ -1,118 +1,118 @@
 {
     "Baseball": {
-        "gender": "Men",
+        "kind": "Men",
         "counterpart": "Softball"
     },
     "Men's Basketball": {
-        "gender": "Men",
+        "kind": "Men",
         "counterpart": "Women's Basketball"
     },
     "Women's Basketball": {
-        "gender": "Women",
+        "kind": "Women",
         "counterpart": "Men's Basketball"
     },
     "Men's XC/TF": {
-        "gender": "Men",
+        "kind": "Men",
         "counterpart": "Women's XC/TF"
     },
     "Women's XC/TF": {
-        "gender": "Women",
+        "kind": "Women",
         "counterpart": "Men's XC/TF"
     },
     "Fencing": {
-        "gender": "Co-Ed"
+        "kind": "Co-Ed"
     },
     "Field Hockey": {
-        "gender": "Women"
+        "kind": "Women"
     },
     "Football": {
-        "gender": "Men"
+        "kind": "Men"
     },
     "Men's Golf": {
-        "gender": "Men",
+        "kind": "Men",
         "counterpart": "Women's Golf"
     },
     "Women's Golf": {
-        "gender": "Women",
+        "kind": "Women",
         "counterpart": "Men's Golf"
     },
     "Men's Gymnastics": {
-        "gender": "Men",
+        "kind": "Men",
         "counterpart": "Women's Gymnastics"
     },
     "Women's Gymnastics": {
-        "gender": "Women",
+        "kind": "Women",
         "counterpart": "Men's Gymnastics"
     },
     "Lacrosse": {
-        "gender": "Women"
+        "kind": "Women"
     },
     "Men's Rowing": {
-        "gender": "Men",
+        "kind": "Men",
         "counterpart": "Women's Rowing"
     },
     "Women's Rowing": {
-        "gender": "Women",
+        "kind": "Women",
         "counterpart": "Men's Rowing"
     },
     "Sailing": {
-        "gender": "Co-Ed"
+        "kind": "Co-Ed"
     },
     "Men's Soccer": {
-        "gender": "Men",
+        "kind": "Men",
         "counterpart": "Women's Soccer"
     },
     "Women's Soccer": {
-        "gender": "Women",
+        "kind": "Women",
         "counterpart": "Men's Soccer"
     },
     "Softball": {
-        "gender": "Women",
+        "kind": "Women",
         "counterpart": "Baseball"
     },
     "Squash": {
-        "gender": "Co-Ed"
+        "kind": "Co-Ed"
     },
     "Synchro": {
-        "gender": "Women"
+        "kind": "Women"
     },
     "Men's Swimming/Diving": {
-        "gender": "Men",
+        "kind": "Men",
         "counterpart": "Women's Swimming/Diving"
     },
     "Women's Swimming/Diving": {
-        "gender": "Women",
+        "kind": "Women",
         "counterpart": "Men's Swimming/Diving"
     },
     "Men's Tennis": {
-        "gender": "Men",
+        "kind": "Men",
         "counterpart": "Women's Tennis"
     },
     "Women's Tennis": {
-        "gender": "Women",
+        "kind": "Women",
         "counterpart": "Men's Tennis"
     },
     "Men's Volleyball": {
-        "gender": "Men",
+        "kind": "Men",
         "counterpart": "Women's Volleyball"
     },
     "Women's Volleyball": {
-        "gender": "Women",
+        "kind": "Women",
         "counterpart": "Beach Volleyball"
     },
     "Beach Volleyball": {
-        "gender": "Women",
+        "kind": "Women",
         "counterpart": "Men's Volleyball"
     },
     "Men's Water Polo": {
-        "gender": "Men",
+        "kind": "Men",
         "counterpart": "Women's Water Polo"
     },
     "Women's Water Polo": {
-        "gender": "Women",
+        "kind": "Women",
         "counterpart": "Men's Water Polo"
     },
     "Wrestling": {
-        "gender": "Men"
+        "kind": "Men"
     }
 }
