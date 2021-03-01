@@ -27,16 +27,6 @@ def computeSimilarity(p1, p2, same_kind_ok=False, same_sport_ok=False):
 
     penalties = 0
 
-    if not same_kind_ok:
-        kind1 = SPORT_DATA[sport1]['kind']
-        kind2 = SPORT_DATA[sport2]['kind']
-        if kind1 == kind2 and random.random() < 0.9:
-            penalties += 0.4
-        if sport1 == "Men's Tennis" and kind2 != "Women":
-            return -1.5
-        elif sport2 == "Men's Tennis" and kind1 != "Women":
-            return -1.5
-
     if p1['athlete mingle']['same grade'] or p2['athlete mingle']['same grade']:
         if p1['meta data']['year'] != p2['meta data']['year']:
             penalties += 0.5
