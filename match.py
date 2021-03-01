@@ -228,6 +228,10 @@ def findSimilarResponse(p1, p2, p3=None, p4=None):
     
     return question_num, response
 
+def adjustScore(old_score):
+    old_score = .5 if old_score < 0 else old_score
+    return .5115 * old_score + .5561
+
 def writeMatchesToFile(matches, people, out_path, first=True, last=True):
     """
     params:
@@ -251,19 +255,20 @@ def writeMatchesToFile(matches, people, out_path, first=True, last=True):
             p2_info = p2['meta data']
             
             question_num, response = findSimilarResponse(p1, p2)
+            score = adjustScore(match[1])
             
             print("Person " + f"{p1_id}".rjust(3) + f" matched with " + \
                   "Person " + f"{p2_id}".rjust(3) + \
-                  f" (score: {match[1]:.4%})")
+                  f" (score: {score:.4%})")
             f.write(f"{p1_id},{p1_info['name']},{p1_info['email']}," + \
                     f"{p1_info['sport name']},{p1_info['year']}," + \
                     f"{p1['athlete mingle']['same grade']}," + \
                     f"{p2_id},{p2_info['name']},{p2_info['email']}," + \
                     f"{p2_info['sport name']},{p2_info['year']}," + \
                     f"{p2['athlete mingle']['same grade']}," + \
-                    f"{match[1]:.4%},{question_num},{response}\n")
+                    f"{score:.4%},{question_num},{response}\n")
             
-            community_score += match[1]
+            community_score += score
             
         community_score /= len(matches)
         
