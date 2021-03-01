@@ -67,12 +67,16 @@ def autolabelh(ax, rects):
                     ha='left', va='center')
 
 def plotHeatMap(scores, out_path):
+    print('Plotting heat map')
+    
     plt.subplots(figsize=(11, 9))
     sb.heatmap(scores, annot=True)
     plt.savefig(out_path)
     plt.close()
     
 def plotYears(years, out_path, interactive=False):
+    print('Plotting years')
+    
     counts = [years.count(y) for y in year_labels]
     
     plt.bar(range(len(counts)), counts, color='#Bf0A30')
@@ -87,6 +91,8 @@ def plotYears(years, out_path, interactive=False):
     plt.close()
     
 def plotMajors(majors, out_path, interactive=False):
+    print('Plotting majors')
+    
     counts = [majors.count(label) for label in major_labels]
     
     fig, ax = plt.subplots()
@@ -109,6 +115,8 @@ def plotMajors(majors, out_path, interactive=False):
     plt.close()
     
 def plotSports(sports, out_path, interactive=False):
+    print('Plotting sports')
+    
     counts = [sports.count(label) for label in sport_labels]
     
     fig, ax = plt.subplots()
@@ -131,6 +139,8 @@ def plotSports(sports, out_path, interactive=False):
     plt.close()
     
 def plotKinds(sports, out_path, interactive=False):
+    print('Plotting kinds')
+    
     counts = [0, 0, 0]
     for res in sports:
         for sport, sport_details in SPORT_DATA.items():
@@ -151,15 +161,12 @@ def plotKinds(sports, out_path, interactive=False):
     plt.close()
     
 def plotYearKind(years, sports, out_path, interactive=False):
+    print('Plotting years and kinds')
+    
     counts = np.zeros((3, len(year_labels)), dtype='intc')
     
     for y, s in zip(years, sports):
-        kind = None
-        for sport in SPORT_DATA.values():
-            if sport['sport'] == s:
-                kind = sport['kind']
-                break
-            
+        kind = SPORT_DATA[s]['kind']
         counts[kind_labels.index(kind)][year_labels.index(y)] += 1
     
     x = np.arange(len(year_labels))
@@ -187,6 +194,8 @@ def plotYearKind(years, sports, out_path, interactive=False):
     plt.close()
     
 def plotResponses(responses, out_path, interactive=False):
+    print('Plotting responses')
+    
     fig, axs = plt.subplots(6, 5)
     fig.set_size_inches(30, 11)
     plt.subplots_adjust(left=0.05, right=0.95, hspace=0.6)
