@@ -60,17 +60,24 @@ import random
 import numpy as np
 from tqdm import tqdm
 
+from similarity import *
 from plot import *
 
 TEXT_FILE = 'data/Athlete Mingle_February 18, 2021_11.25.csv'
 NUMBER_FILE = 'data/Athlete Mingle_February 18, 2021_11.24.csv'
-OUT_PATH = 'output/02-20/'
+OUT_PATH = 'output/03-01/'
+
+MATCH_HEADER = 'p1 id,p1 name,p1 email,p1 sport,p1 year,p1 same grade,' + \
+               'p2 id,p2 name,p2 email,p2 sport,p2 year,p2 same grade,' + \
+               'score,question,response\n'
+
+################################ Loading data #################################
 
 SPORT_DATA = {}
 with open('sports.json') as f:
     SPORT_DATA = json.load(f)
 
-def loadData():
+def loadData(verbose=False):
     print(f"{'=' * 10} Loading data {'=' * 10}")
         
     people = []
@@ -79,9 +86,11 @@ def loadData():
     with open(NUMBER_FILE) as f:
         _, column_headers, _, *responses = csv.reader(f)
         
-        # for i, column in enumerate(column_headers[25:54]):
-        #     print(f"{i}: {column}")
+        if verbose:
+            for i, column in enumerate(column_headers[25:54]):
+                print(f"{i}: {column}")
         
+        """ Skip unfinished responses. """
         for row in responses:
             for res in row[25:54]:
                 if res == '':
@@ -105,7 +114,8 @@ def loadData():
                 },
                 'athlete mingle': {
                     '1-on-1': row[22] == '1',
-                    'friend': row[23],
+                    'friends': [f.strip() for f in row[23].split(',')
+                                if f != ''],
                     'same grade': row[24] == '1',
                     'speed-dating': row[54] == '1',
                 },
@@ -114,7 +124,8 @@ def loadData():
             people.append(person)
             
             i += 1
-            
+    
+    """ Add additional string data to each person. """
     with open(TEXT_FILE) as f:
         _, column_headers, _, *responses = csv.reader(f)
         
@@ -130,263 +141,114 @@ def loadData():
             people[i]['meta data']['major'] = row[21]
             
             i += 1
-
-    # random.seed(42)
     
-    # Randomize people
+    """ Randomize people so that the timestamp doesn't influence matches. """
+    # random.seed(42)
     random.shuffle(people)
             
     print(f'There were {len(people)} responses ' + \
           f'and {len(skip_ids)} unfinished surveys.')
-    # print(json.dumps(people[-1], indent=4))
+    
+    if verbose:
+        print(json.dumps(people[-1], indent=4))
     
     return people
+
+################################ Data analysis ################################
 
 def analyzeData(people):
     print(f"\n{'=' * 10} Analyzing data {'=' * 10}")
     
-    year_labels = ['Frosh', 'Sophomore', 'Junior', 'Senior', '5th year/Coterm']
-    major_labels = [
-        'Aeronautics and Astronautics',
-        'Biology',
-        'Chemistry',
-        'Computer Science',
-        'Earth Systems',
-        'Econ',
-        'Engineering',
-        'English',
-        'History',
-        'Human Biology',
-        'MS&E',
-        'Physics',
-        'Political Science',
-        'Product Design',
-        'Psychology',
-        'STS',
-        'SymSys',
-        'Other'
-    ]
-    sport_labels = SPORT_DATA.keys()
-    gender_labels = ['Men', 'Women', 'Co-Ed']
-    
-    
-    ########## Analyze years ##########
-    
     years = [person['meta data']['year'] for person in people]
-    counts = [years.count(y) for y in year_labels]
-    
-    # plotYears(year_labels, counts, out_path=f'{OUT_PATH}/years.png')
-        
-    ########## Analyze majors ##########
-    
     majors = [person['meta data']['major'] for person in people]
-    counts = [majors.count(label) for label in major_labels]
-    
-    # plotMajors(major_labels, counts, out_path=f'{OUT_PATH}majors.png')
-    
-    ########## Analyze sports ##########
-    
     sports = [person['meta data']['sport name'] for person in people]
-    counts = [sports.count(label) for label in sport_labels]
-    
-    # plotSports(sport_labels, counts, out_path=f'{OUT_PATH}sports.png')
-    
-    ########## Analyze genders ##########
-    
-    counts = [0, 0, 0]
-    for res in sports:
-        for sport, sport_details in SPORT_DATA.items():
-            if sport == res:
-                counts[gender_labels.index(sport_details['gender'])] += 1
-    
-    # plotGenders(gender_labels, counts, out_path=f'{OUT_PATH}genders.png')
-    
-    ########## Analyze year/gender ##########
-    
-    counts = np.zeros((3, len(year_labels)), dtype='intc')
-    
-    for y, s in zip(years, sports):
-        gender = None
-        for sport in SPORT_DATA.values():
-            if sport['sport'] == s:
-                gender = sport['gender']
-                break
-            
-        counts[gender_labels.index(gender)][year_labels.index(y)] += 1
-
-    # plotYearGender(year_labels, counts, out_path=f'{OUT_PATH}yearsGenders.png')
-    
-    ########## Analyze response distribution ##########
-    
     responses = np.array([person['responses'] for person in people])
-    
+
+    plotYears(years, out_path=f'{OUT_PATH}years.png')
+    plotMajors(majors, out_path=f'{OUT_PATH}majors.png')
+    plotSports(sports, out_path=f'{OUT_PATH}sports.png')
+    plotKinds(sports, out_path=f'{OUT_PATH}kinds.png')
+    plotYearKind(years, sports, out_path=f'{OUT_PATH}yearsKinds.png')
     plotResponses(responses, out_path=f'{OUT_PATH}responses.png')
 
-def computeSimilarity(p1, p2, same_gender_ok=False, same_sport_ok=False):
-    """
-    Returns the percentage of questions that were answered the same.
-    """
-    # check if p1 and p2 are the same person
-    if p1['qualtrics id'] == p2['qualtrics id']: return -1.5
+############################## Helper functions ###############################
 
-    penalties = 0
-
-    if not same_gender_ok:
-        gender1 = SPORT_DATA[p1['meta data']['sport name']]['gender']
-        gender2 = SPORT_DATA[p2['meta data']['sport name']]['gender']
-        if gender1 == gender2 and random.random() < 0.9:
-            penalties += -0.4
-        if p1['meta data']['sport name'] == "Men's Tennis" and gender2 != "Women":
-            return -1.5
-        elif p2['meta data']['sport name'] == "Men's Tennis" and gender1 != "Women":
-            return -1.5
-
-    if p1['athlete mingle']['same grade'] or p2['athlete mingle']['same grade']:
-        if p1['meta data']['year'] != p2['meta data']['year']:
-            penalties += -0.5
-
-    if not same_sport_ok:
-        # check if they are on the same team
-        if p1['meta data']['sport name'] == p2['meta data']['sport name']:
-            penalties += -0.3
-        
-    # check if they are on counterpart teams
-    counterpart1 = SPORT_DATA[p1['meta data']['sport name']].get('counterpart', 'none1')
-    counterpart2 = SPORT_DATA[p2['meta data']['sport name']].get('counterpart', 'none2')
-    if (counterpart1 == p2['meta data']['sport name'] or 
-        counterpart2 == p1['meta data']['sport name']):
-        penalties += -0.1
-    
-    if penalties < 0:
-        return penalties
-    
-    responses1 = np.array(p1['responses'])
-    responses2 = np.array(p2['responses'])
-    
-    raw_score = np.count_nonzero(responses1 == responses2) / len(responses1)
-    
-    # minimize far away grades
-    year_labels = ['Frosh', 'Sophomore', 'Junior', 'Senior', '5th year/Coterm']
-    if abs(year_labels.index(p1['meta data']['year']) -
-           year_labels.index(p2['meta data']['year'])) > 2:
-        raw_score *= 0.1
-    
-    return raw_score
-
-def matchOneOnOnes(one_on_one):
-    # compute compatibilities
-    print('Computing compatibilities')
-    scores = np.zeros((len(one_on_one), len(one_on_one)))
-    with tqdm(total=len(one_on_one)) as progress_bar:
-        for i, person1 in enumerate(one_on_one):
-            progress_bar.update()
-            for j, person2 in enumerate(one_on_one):
-                scores[i][j] = computeSimilarity(person1, person2)
-    
-    print(scores)
-    # print('Plotting heat map')
-    # plotHeatMap(scores, out_path=f'{OUT_PATH}confusion_matrix.png')
-    print()
-    
-    # select best overall pairs
-    """
-    Greedy algorithm: find the highest match, then pair those two and remove
-    from set of matches.
-    """
-    print('Creating matches')
-    unmatched = set(range(len(one_on_one)))
-    matches = []
-    with tqdm(total=len(unmatched)) as progress_bar:
-        while (len(unmatched) > 1):
-            ind = np.unravel_index(np.argmax(scores, axis=None), scores.shape)
-            matches.append([ind, scores[ind]])
-            
-            for i in ind:
-                scores[i, :] = -1
-                scores[:, i] = -1
-                unmatched.remove(i)
-                progress_bar.update()
-    
-    return matches
-
-def matchGroups(group):
-    """
-    Make groups of size four.
-    """
-    # compute compatibilities
-    print('Computing compatibilities')
-    scores = np.zeros((len(group), len(group)))
-    with tqdm(total=len(group)) as progress_bar:
-        for i, person1 in enumerate(group):
-            progress_bar.update()
-            for j, person2 in enumerate(group):
-                scores[i][j] = computeSimilarity(person1, person2, same_gender_ok=True)
-    
-    print(scores)
-    # print('Plotting heat map')
-    # plotHeatMap(scores, out_path=f'{OUT_PATH}confusion_matrix.png')
-    print()
-    
-    # select best overall groups
-    """
-    Greedy algorithm: find the highest match, then pair those two and remove
-    from set of matches.
-    """
-    print('Creating matches')
-    
-    # match requests
-    names = [person['meta data']['name'] for person in group]
-    
-    # dictionary of name -> list of names
-    matches = {name: [] for name in names}
-    
-    # print(json.dumps(matches, indent=4))
-    
-    for person in group:
-        friends = [f.strip()
-                   for f in person['athlete mingle']['friend'].split(',')
-                   if f != '']
-        
-        for friend in friends:
-            if friend not in matches:
-                print(f"{friend} (1-on-1)".ljust(25) + f"nominated by " + \
-                      f"{person['meta data']['name']} (group)")
-                continue
-            if friend not in matches[person['meta data']['name']]:
-                matches[person['meta data']['name']].append(friend)
-            if person['meta data']['name'] not in matches[friend]:
-                matches[friend].append(person['meta data']['name'])
-        
-    group_match_by_hand = {}
-            
-    for name, friends in matches.items():
-        if len(friends) > 0:
-            group_match_by_hand[name] = friends
-    
-    one_on_one_names = [name for name in matches if name not in group_match_by_hand]
-    
+def separatePairsAndGroups(people):
     one_on_one = []
+    group = []
+    for person in people:
+        if person['athlete mingle']['1-on-1']:
+            one_on_one.append(person)
+        else:
+            group.append(person)
+    return one_on_one, group
+
+def findPerson(target_name, people):
+    for person in people:
+        if person['meta data']['name'] == target_name:
+            return person
+
+def computeSimilarities(people, same_kind_ok=False):
+    print('Computing compatibilities')
     
-    for name in one_on_one_names:
-        for person in group:
-            if person['meta data']['name'] == name:
-                one_on_one.append(person)
-                break
-            
-    matches = matchOneOnOnes(one_on_one)
+    scores = np.zeros((len(people), len(people)))
+    with tqdm(total=len(people)) as progress_bar:
+        for i, p1 in enumerate(people):
+            progress_bar.update()
+            for j, p2 in enumerate(people):
+                scores[i][j] = computeSimilarity(p1, p2, 
+                                                 same_kind_ok=same_kind_ok)
     
-    with open(f'{OUT_PATH}matches_group.csv', 'w') as f:
-        f.write('p1 id,p1 name,p1 email,p1 sport,p1 year,p1 same grade,' + \
-                'p2 id,p2 name,p2 email,p2 sport,p2 year,p2 same grade,' + \
-                'score,question,response\n')
+    print(scores)
+    # print('Plotting heat map')
+    # plotHeatMap(scores, out_path=f'{OUT_PATH}confusion_matrix.png')
+    print()
+    
+    return scores
+    
+def findSimilarResponse(p1, p2, p3=None, p4=None):
+    """
+    Returns a random similar response. A response is the same if for each
+    person, the person is None, or the response is the same as p1's response.
+    
+    Here is the numpy code when there are only 2 people:
+        same_responses = np.argwhere(res1 == res2).flatten()
+    """
+    res1 = np.array(p1['responses'])
+    res2 = np.array(p2['responses'])
+    res3 = np.array(p3['responses']) if p3 else None
+    res4 = np.array(p4['responses']) if p4 else None
+    
+    same_responses = []
+    for i in range(len(res1)):
+        if ((res1[i] == res2[i]) and
+            (not p3 or res1[i] == res3[i]) and
+            (not p4 or res1[i] == res4[i])):
+            same_responses.append(i)
+    
+    question_num = np.random.choice(same_responses)
+    response = res1[question_num]
+    
+    return question_num, response
+
+def writeMatchesToFile(matches, people, out_path, first=True, last=True):
+    """
+    params:
+        first - True if this is the first set of matches written to the file
+        last - True if this is the last set of matches written to the file
+    """
+    mode = 'w' if first else 'a'
+    with open(out_path, mode) as f:
+        if first:
+            f.write(MATCH_HEADER)
         
         community_score = 0.0
         
         for match in matches:
             p1_id, p2_id = match[0]
             
-            p1 = one_on_one[p1_id]
-            p2 = one_on_one[p2_id]
+            p1 = people[p1_id]
+            p2 = people[p2_id]
             
             p1_info = p1['meta data']
             p2_info = p2['meta data']
@@ -409,204 +271,149 @@ def matchGroups(group):
         
         message = f"\nCommunity score: {community_score:.4%}\n"
         print(message)
-        f.write(message + '\n')
+        f.write(message)
+
+        if not last:
+            f.write('\n')
+
+################################## Matching ###################################
+
+def makePairMatches(people):
+    """
+    Returns an array of matches where each match is a list of length 2. The
+    frist element of the list is a pair of indices into the PEOPLE array. The
+    second element of the list is the computed score for that pair.
+    
+    This algorithm uses a greedy algorithm: find the highest match, then pair
+    those two and remove them from set of matches.
+    """
+    scores = computeSimilarities(people)
+    
+    print('Creating matches')
+    
+    unmatched = set(range(len(people)))
+    matches = []
+    with tqdm(total=len(unmatched)) as progress_bar:
+        while (len(unmatched) > 1):
+            ind = np.unravel_index(np.argmax(scores, axis=None), scores.shape)
+            matches.append([ind, scores[ind]])
+            
+            for i in ind:
+                scores[i, :] = -1
+                scores[:, i] = -1
+                unmatched.remove(i)
+                progress_bar.update()
+    
+    return matches
+
+def matchGroups(group):
+    """
+    Make groups of size four.
+    """
+    print('Creating matches')
+    
+    """ Respect match requests """
+    # dictionary of name -> list of friends' names
+    friend_dict = {person['meta data']['name']: [] for person in group}
+    
+    for person in group:
+        for friend in person['athlete mingle']['friends']:
+            # Someone put down a friend but friend signed up for 1-on-1
+            if friend not in friend_dict:
+                print(f"{friend} (1-on-1)".ljust(25) + f"nominated by " + \
+                      f"{person['meta data']['name']} (group)")
+                continue
+            # add person and friend to corresponding element in friend_dict
+            if friend not in friend_dict[person['meta data']['name']]:
+                friend_dict[person['meta data']['name']].append(friend)
+            if person['meta data']['name'] not in friend_dict[friend]:
+                friend_dict[friend].append(person['meta data']['name'])
+    
+    """ Separate into people who put friend requests and people who didn't """
+    friend_requests_dict = {}
+    no_friend_requests = []
+            
+    for name, friends in friend_dict.items():
+        if len(friends) == 0:
+            no_friend_requests.append(findPerson(name))
+        else:
+            friend_requests_dict[name] = friends
+            
+    matches = makePairMatches(no_friend_requests)
+    
+    writeMatchesToFile(matches, no_friend_requests,
+                       f'{OUT_PATH}matches_group.csv', last=False)
         
-    # remove duplicates
-    group_match_with_friends = []
-        
-    for name, friends in group_match_by_hand.items():
-        for p1, p2 in group_match_with_friends:
-            if p2['meta data']['name'] == name:
+    """
+    Clean friend_requests_dict. Make a list where each element is a tuple of 2
+    people (no groups of 3).
+    """
+    friend_requests = []
+    matches = []
+    
+    id = 0
+    for name, friends in friend_requests_dict.items():
+        # if the person is already included, don't create a duplicate match
+        for person in friend_requests:
+            if person['meta data']['name'] == name:
                 break
         else:
-            friend = friends[0]
-            p1, p2 = None, None
+            """
+            Only get the first friend. Add the person and friend to the list.
+            Append the indices to matches with the computed score.
+            """
+            p1, p2 = findPerson(name), findPerson(friends[0])
+            friend_requests.extend([p1, p2])
+            score = computeSimilarity(p1, p2, same_kind_ok=True,
+                                      same_sport_ok=True)
+            
+            matches.append([(id, id + 1), score])
+            id += 2
         
-            for person in group:
-                if person['meta data']['name'] == name:
-                    p1 = person
-                elif person['meta data']['name'] == friend:
-                    p2 = person
-                if p1 and p2:
-                    break
-            group_match_with_friends.append((p1, p2))
-        
-    with open(f'{OUT_PATH}matches_group.csv', 'a') as f:
-        community_score = 0.0
-        
-        for p1, p2 in group_match_with_friends:
-            # print(f"p1: {p1['meta data']['name']}".ljust(30) + f"p2: {p2['meta data']['name']}")
-            
-            p1_id, p2_id = -1, -1
-            
-            p1_info = p1['meta data']
-            p2_info = p2['meta data']
-            
-            score = computeSimilarity(p1, p2, same_gender_ok=True, same_sport_ok=True)
-            question_num, response = findSimilarResponse(p1, p2)
-            
-            print(f"{p1_info['name']}".ljust(20) + \
-                  f" matched with " + f"{p2_info['name']}".ljust(20) + \
-                  f" ({score:.4%})")
-            f.write(f"{p1_id},{p1_info['name']},{p1_info['email']}," + \
-                    f"{p1_info['year']},{p1['athlete mingle']['same grade']}," + \
-                    f"{p1_info['sport name']}," + \
-                    f"{p2_id},{p2_info['name']},{p2_info['email']}," + \
-                    f"{p2_info['year']},{p2['athlete mingle']['same grade']}," + \
-                    f"{p2_info['sport name']}," + \
-                    f"{score:.4%},{question_num},{response}\n")
-            
-            community_score += score
-            
-        community_score /= len(group_match_with_friends)
-        
-        message = f"\nCommunity score: {community_score:.4%}"
-        print(message)
-        f.write(message)
+    writeMatchesToFile(matches, friend_requests,
+                       f'{OUT_PATH}matches_group.csv', first=False)
 
-def match(people):
+def matchOneOnOnes(one_on_one):
     print(f"\n{'=' * 10} Making matches {'=' * 10}")
     
-    one_on_one = []
-    group = []
-    for person in people:
-        if person['athlete mingle']['1-on-1']:
-            one_on_one.append(person)
-        else:
-            group.append(person)
+    matches = makePairMatches(one_on_one)
     
-    matches = matchOneOnOnes(one_on_one)
+    writeMatchesToFile(matches, one_on_one, f'{OUT_PATH}matches_1-on-1.csv')
     
-    with open(f'{OUT_PATH}matches_1-on-1.csv', 'w') as f:
-        f.write('p1 id,p1 name,p1 email,p1 sport,p1 year,p1 same grade,' + \
-                'p2 id,p2 name,p2 email,p2 sport,p2 year,p2 same grade,' + \
-                'score,question,response\n')
+    # Print kind distributions
+    ok_count = 0
+    male_male_count = 0
+    female_female_count = 0
+    coed_count = 0
         
-        community_score = 0.0
-        ok_count = 0
-        male_male_count = 0
-        female_female_count = 0
-        coed_count = 0
+    for match in matches:
+        p1_id, p2_id = match[0]
         
-        for match in matches:
-            p1_id, p2_id = match[0]
+        p1 = one_on_one[p1_id]
+        p2 = one_on_one[p2_id]
+        
+        kind1 = SPORT_DATA[p1['meta data']['sport name']]['kind']
+        kind2 = SPORT_DATA[p2['meta data']['sport name']]['kind']
+        if kind1 != kind2:
+            ok_count += 1
+        elif kind1 == "Men":
+            male_male_count += 1
+        elif kind2 == "Women":
+            female_female_count += 1
+        elif kind2 == "Co-Ed":
+            coed_count += 1
             
-            p1 = one_on_one[p1_id]
-            p2 = one_on_one[p2_id]
-            
-            p1_info = p1['meta data']
-            p2_info = p2['meta data']
-            
-            question_num, response = findSimilarResponse(p1, p2)
-            
-            gender1 = SPORT_DATA[p1['meta data']['sport name']]['gender']
-            gender2 = SPORT_DATA[p2['meta data']['sport name']]['gender']
-            if gender1 != gender2:
-                ok_count += 1
-            elif gender1 == "Men":
-                male_male_count += 1
-            elif gender2 == "Women":
-                female_female_count += 1
-            elif gender2 == "Co-Ed":
-                coed_count += 1
-            
-            print(f"Person {p1_id}".ljust(9) + f" matched with " + \
-                  f"Person {p2_id}".ljust(9) + f" ({match[1]:.4%})")
-            f.write(f"{p1_id},{p1_info['name']},{p1_info['email']}," + \
-                    f"{p1_info['year']},{p1['athlete mingle']['same grade']}," + \
-                    f"{p1_info['sport name']}," + \
-                    f"{p2_id},{p2_info['name']},{p2_info['email']}," + \
-                    f"{p2_info['year']},{p2['athlete mingle']['same grade']}," + \
-                    f"{p2_info['sport name']}," + \
-                    f"{match[1]:.4%},{question_num},{response}\n")
-            
-            community_score += match[1]
-            
-        community_score /= len(matches)
-        
-        print(f'{ok_count} male-female')
-        print(f'{male_male_count} male-male')
-        print(f'{female_female_count} female-female')
-        print(f'{coed_count} coed-coed')
-        
-        message = f"\nCommunity score: {community_score:.4%}"
-        print(message)
-        f.write(message)
-        
-    matchGroups(group)
-
-def findSimilarResponse(p1, p2):
-    """
-    Returns a random similar response.
-    """
-    responses1 = np.array(p1['responses'])
-    responses2 = np.array(p2['responses'])
-    
-    same_responses = np.argwhere(responses1 == responses2).flatten()
-    
-    question_num = np.random.choice(same_responses)
-    response = responses1[question_num]
-    
-    return question_num, response
-
-def findPerson(target_name, people):
-    for person in people:
-        if person['meta data']['name'] == target_name:
-            return person
-
-def fineTune(people):
-    new_matches_one_on_one = [
-        ("Will Richmond", "Dani Jacobstein"),
-        ("Matt Szot", "Hari Sathyamurthy"),
-        ("Keegan Tingey", "Katelin Gildersleeve"),
-        ("Zoe Bartel", "Alexandre Rotsaert"),
-        ("Ryan Ludwick", "Julia Cooper"),
-        ("Nick Stemmet", "Soren Jensen"),
-        ("Ashten Prechtel", "Chloe Harbilas"),
-        ("Jaimi Salone", "Kyra Pelton"),
-        ("Tatum Boyd", "Lucy Black"),
-        ("Isaac Love", "Abby Converse")
-    ]
-    
-    new_matches_group = [
-        ("Connor Evans", "Chloe Doyle"),
-        ("Aiden Weaver", "Brandon Nguyen")
-    ]
-    
-    print('=' * 20 + ' One-on-ones ' + '=' * 20 + '\n')
-    for name1, name2 in new_matches_one_on_one:
-        p1 = findPerson(name1, people)
-        p2 = findPerson(name2, people)
-        
-        print(f"{name1} ({p1['meta data']['sport name']})".ljust(40) + \
-              f"{name2} ({p2['meta data']['sport name']})")
-        similarity = computeSimilarity(p1, p2)
-        similarity = .5 if similarity < 0 else similarity
-        new_similarity = .5115 * similarity + .5561
-        print(f"\tSimilarity: {new_similarity:.4%}")
-        q, r = findSimilarResponse(p1, p2)
-        print(f"\tQuestion: {q} {r}\n")
-        
-    print('\n' + '=' * 20 + ' Groups ' + '=' * 20 + '\n')
-    for name1, name2 in new_matches_group:
-        p1 = findPerson(name1, people)
-        p2 = findPerson(name2, people)
-        
-        print(f"{name1} ({p1['meta data']['sport name']})".ljust(40) + \
-              f"{name2} ({p1['meta data']['sport name']})")
-        similarity = computeSimilarity(p1, p2)
-        similarity = .5 if similarity < 0 else similarity
-        new_similarity = .5115 * similarity + .5561
-        print(f"\tSimilarity: {new_similarity:.4%}")
-        q, r = findSimilarResponse(p1, p2)
-        print(f"\tQuestion: {q} {r}\n")
-        
+    print(f'{ok_count} male-female')
+    print(f'{male_male_count} male-male')
+    print(f'{female_female_count} female-female')
+    print(f'{coed_count} coed-coed')
 
 def main():
     people = loadData()
-    fineTune(people)
     # analyzeData(people)
-    # matches = match(people)
+    one_on_one, group = separatePairsAndGroups(people)
+    matchOneOnOnes(one_on_one)
+    matchGroups(group)
 
 if __name__ == '__main__':
     main()
