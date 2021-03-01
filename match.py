@@ -297,9 +297,15 @@ def makePairMatches(people):
         matches.append([ind, scores[ind]])
         
         for i in ind:
+            assert i in unmatched, 'Ran out of matches. Please re-run.'
+            
+            unmatched.remove(i)
             scores[i, :] = -1
             scores[:, i] = -1
-            unmatched.remove(i)
+            
+    if len(unmatched) == 1:
+        print('WARNING: Someone is left unmatched.')
+        print(json.dumps(people[list(unmatched)[0]], indent=4))
     
     return matches
 

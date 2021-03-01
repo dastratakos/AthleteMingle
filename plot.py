@@ -4,6 +4,8 @@ date: 2/10/21
 author: Dean Stratakos
 ----------------------
 Helper functions for visualizing data from Athlete Mingle.
+
+TODO: Add number labels to years and kinds plots
 """
 import json
 
