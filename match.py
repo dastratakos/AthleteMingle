@@ -386,34 +386,6 @@ def matchOneOnOnes(one_on_one):
     
     matches = makePairMatches(one_on_one)
     writeMatchesToFile(matches, one_on_one, f'{OUT_PATH}matches_1-on-1.csv')
-    
-    # Print kind distributions
-    ok_count = 0
-    male_male_count = 0
-    female_female_count = 0
-    coed_count = 0
-        
-    for match in matches:
-        p1_id, p2_id = match[0]
-        
-        p1 = one_on_one[p1_id]
-        p2 = one_on_one[p2_id]
-        
-        kind1 = SPORT_DATA[p1['meta data']['sport name']]['kind']
-        kind2 = SPORT_DATA[p2['meta data']['sport name']]['kind']
-        if kind1 != kind2:
-            ok_count += 1
-        elif kind1 == "Men":
-            male_male_count += 1
-        elif kind2 == "Women":
-            female_female_count += 1
-        elif kind2 == "Co-Ed":
-            coed_count += 1
-            
-    print(f'{ok_count} male-female')
-    print(f'{male_male_count} male-male')
-    print(f'{female_female_count} female-female')
-    print(f'{coed_count} coed-coed')
 
 def main():
     os.makedirs(OUT_PATH, exist_ok=True)
